@@ -42,7 +42,7 @@ def top_three_calories(filename):
 def main():
     filename = input("Give filename: ")
     if filename == "":
-        filename = '01_input.txt'
+        filename = 'inputs/01_input.txt'
     max_calories, max_calories_elf = file_to_list(filename)
     print(f"Elf {max_calories_elf} was carrying the most calories, {max_calories} cal")
     top_three = top_three_calories(filename)

@@ -76,7 +76,7 @@ def calculate_move(p1, p2):
 
 
 def main():
-    filename = "02_input.txt"
+    filename = "inputs/02_input.txt"
     points_A = points_from_strategy_A(filename)
     print(points_A)
     points_B = points_from_strategy_B(filename)
