@@ -1,12 +1,14 @@
 
 from dataclasses import dataclass
 from typing import List, Callable
-from operator import mul
 
 
 @dataclass
 class Item:
     worryLevel: int
+
+    def __repr__(self):
+        return str(self.worryLevel)
 
 
 class Monkey:
@@ -32,7 +34,7 @@ rounded down to the nearest integer.
 
 def parseStartingItems(x : str) -> List[int]:
     items = x.split(',')
-    return [int(item.strip()) for item in items]
+    return [Item(worryLevel=int(item.strip())) for item in items]
 
 
 def parseOperation(x : str) -> Callable[[Item], Item]:
@@ -75,6 +77,22 @@ def parseOperation(x : str) -> Callable[[Item], Item]:
     return operation
 
 
+def parseTest(x: str) -> Callable[[Item], bool]:
+    if not x.startswith('divisible by'):
+        raise ValueError(f'Unknown test type: {x}')
+    parts = x.split()
+    last = parts[-1].strip()
+    try:
+        divisor = int(last)
+    except ValueError:
+        print("Invalid divisor: {last}")
+    
+    def test(item: Item):
+        return item.worryLevel % divisor == 0
+    
+    return test
+
+
 
 
 def read_monkeys_from_file(filename):
@@ -105,7 +123,10 @@ def read_monkeys_from_file(filename):
                 operation = parseOperation(body)
                 print(operation)
                 print(operation(4))
-
+            elif head.startswith('Test'):
+                test = parseTest(body)
+                print(test)
+                print(test(Item(23)))
 
 
 
