@@ -2,39 +2,27 @@ from dataclasses import dataclass
 
 class AnswerCapturer:
     def __init__(self):
-        self.values = []
+        self.v = []
+
+    def values(self):
+        return self.v
 
     def addValue(self, value):
-        self.values.append(value)
+        self.v.append(value)
     
     def total(self):
-        return sum(self.values)
-
-class Buffer:
-    def __init__(self, slots=2):
-        self.slots = slots
-        self.buffer = [0 for i in range(slots)]
-        
-    def advance(self, a=0):
-        self.buffer.append(a)
-        return self.buffer.pop(0)
-
-    def __str__(self):
-        return f"[{'', ''.join(self.buffer)}]"
+        return sum(self.v)
     
-    def __repr__(self):
-        return f"[{'', ''.join(self.buffer)}]"
 
-class Device:
+class CPU:
     def __init__(self, x=1, cycle=0, verbose=True, captureCondition=lambda cycle: True, answerCapturer = AnswerCapturer()):
         self.x = x
         self.cycle = cycle
-        self.buffer = Buffer()
         self.verbose = verbose
         self.lastCommand = 'noop'
         self.captureCondition = captureCondition
         self.answerCapturer = answerCapturer
-        self.printState()
+        self.buffer = []
 
     def printState(self):
         if self.verbose:
@@ -44,20 +32,31 @@ class Device:
     
     def noop(self):
         self.cycle += 1
-        self.x += self.buffer.advance(0)
         self.lastCommand = 'noop'
         self.printState()
         
 
     def addx(self, a):
         self.cycle += 1
-        self.x += self.buffer.advance(a)
         self.lastCommand = f'addx {a}'
         self.printState()
+        self.cycle += 1
+        self.lastCommand = f'(wait)'
+        self.printState()
+        self.x += a
         
 
     def signalStrength(self):
         return self.x * self.cycle
+    
+
+    def runCommand(self, command, a):
+        if command == 'noop':
+            self.noop()
+        elif command == 'addx':
+            self.addx(a)
+
+
     
     
 
@@ -68,15 +67,15 @@ class Command:
 
 
 class User:
-    def __init__(self, device = Device()):
-        self.device = device
+    def __init__(self, cpu = CPU()):
+        self.cpu = cpu
         self.commands = []
 
     def runCommand(self, command, a):
         if command == 'noop':
-            self.device.noop()
+            self.cpu.noop()
         elif command == 'addx':
-            self.device.addx(a)
+            self.cpu.addx(a)
             
 
     def readCommandFile(self, filename):
@@ -95,6 +94,47 @@ class User:
             self.runCommand(command.command, command.value)
 
 
+class CRT:
+    def __init__(self, width, height, state = None):
+        self.width = width
+        self.height = height
+        self.total = width*height
+        if state == None:
+            self.state = [False for _ in range(self.total)]
+        else:
+            self.state = state
+
+    def show(self):
+        for i in range(self.total):
+            if self.state[i]:
+                print("#", end="")
+            else:
+                print(".", end="")
+            if i % self.width == self.width-1:
+                print("")
+
+    def pixelBrightness(self, cycle, x):
+        if (cycle-1) in [x-1, x, x+1]:
+            return True
+        return False
+
+    def update(self, cycle, x):
+        self.state[cycle-1] = self.pixelBrightness(cycle, x)
+
+
+def readCommandFile(filename):
+    commands = []
+    with open(filename, 'r') as f:
+        for row in f:
+            values = row.split()
+            command = values[0]
+            if len(values) == 1:
+                value = 0
+            else:
+                value = int(values[1])
+            commands.append(Command(command, value))
+    return commands
+
 def exampleData():
     user = User()
     user.readCommandFile('inputs/10_example.txt')
@@ -109,15 +149,29 @@ def partA():
         return False
     
     answer = AnswerCapturer()
-    device = Device(captureCondition=captureCondition, answerCapturer=answer)
-    user = User(device=device)
+    cpu = CPU(captureCondition=captureCondition, answerCapturer=answer)
+    user = User(cpu=cpu)
     user.readCommandFile('inputs/10_input.txt')
     user.runAllCommands()
-    print(answer.values, "->", answer.total())
+    print(answer.values(), "->", answer.total())
+
+def partB():
+    cpu = CPU()
+    display = CRT(40, 6)
+    display.show()
+    #commands = readCommandFile('inputs/10_input.txt')
+    commands = readCommandFile('inputs/10_example.txt')
+    for command in commands:
+        display.update(cpu.cycle, cpu.x)
+        cpu.runCommand(command.command, command.value)
+        
+        display.show()
+        
 
 def main():
-    exampleData()
+    #exampleData()
     #partA()
+    partB()
 
     
 
