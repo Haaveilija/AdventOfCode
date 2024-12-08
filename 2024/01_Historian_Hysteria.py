@@ -14,15 +14,22 @@ def read_input(filename):
 def get_distance(lists):
 	return sum([abs(lists[0][i] - lists[1][i]) for i in range(len(lists[0]))])
 
+def get_similarity(lists):
+	return sum([lists[0][i] * lists[1].count(lists[0][i])for i in range(len(lists[0]))])
 	
-def first_part():
-	filename = '01_input.txt'
-	lists = read_input(filename)
-	distance = get_distance(lists)
-	return distance
+def first_part(lists):
+	return get_distance(lists)
+
+
+def second_part(lists):
+	return get_similarity(lists)
+
 
 def main():
-	print(first_part())
+	filename = '01_input.txt'
+	lists = read_input(filename)
+	print(first_part(lists))
+	print(second_part(lists))
 
 
 if __name__ == "__main__":
